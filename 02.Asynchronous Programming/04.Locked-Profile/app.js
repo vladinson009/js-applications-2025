@@ -12,7 +12,7 @@ async function lockedProfile() {
   for (const user of users) {
     const divProfile = document.createElement('div');
     divProfile.className = 'profile';
-
+    
     divProfile.innerHTML = `<img src="./iconProfile2.png" class="userIcon" />
 				<label>Lock</label>
 				<input type="radio" name="${user.username}Locked" value="lock" checked>

@@ -1,4 +1,4 @@
-const { chromium } = require('playwright-chromium');
+const { chromium } = require('playwright-webkit');
 const { expect } = require('chai');
 
 const host = 'http://localhost:' + 3000; // Application host (NOT service host - that can be anything)
@@ -50,7 +50,6 @@ describe('E2E tests', function () {
   });
   beforeEach(async () => {
     page = await browser.newPage();
-
   });
   afterEach(async () => {
     await page.close();
@@ -108,14 +107,15 @@ describe('E2E tests', function () {
 
       await page.fill('[type="text"]', id);
 
-
       await Promise.all([
         page.waitForRequest((request) => {
-          return request.url().toLowerCase().endsWith(endpoints.catalog(id).toLowerCase());
+          return request
+            .url()
+            .toLowerCase()
+            .endsWith(endpoints.catalog(id).toLowerCase());
         }),
-        page.click('[type="button"]')
-      ])
-
+        page.click('[type="button"]'),
+      ]);
 
       const stops = await page.$$eval(`#buses li`, (t) =>
         t.map((s) => s.textContent)
@@ -138,13 +138,15 @@ describe('E2E tests', function () {
 
       await page.fill('[type="text"]', id);
 
-
       await Promise.all([
         page.waitForRequest((request) => {
-          return request.url().toLowerCase().endsWith(endpoints.catalog(id).toLowerCase());
+          return request
+            .url()
+            .toLowerCase()
+            .endsWith(endpoints.catalog(id).toLowerCase());
         }),
-        page.click('[type="button"]')
-      ])
+        page.click('[type="button"]'),
+      ]);
 
       await page.waitForSelector('#stopName');
 
