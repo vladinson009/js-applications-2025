@@ -1,4 +1,4 @@
-const { chromium } = require('playwright-chromium');
+const { chromium } = require('playwright-webkit');
 const { expect } = require('chai');
 
 const host = 'http://localhost:3000'; // Application host (NOT service host - that can be anything)
@@ -64,9 +64,7 @@ describe('E2E tests', function () {
   this.timeout(DEBUG ? 120000 : timeout);
   before(
     async () =>
-      (browser = await chromium.launch(
-        DEBUG ? { headless: false, slowMo } : {}
-      ))
+      (browser = await chromium.launch(DEBUG ? { headless: false, slowMo } : {}))
   );
   after(async () => await browser.close());
   beforeEach(async () => {
@@ -88,20 +86,19 @@ describe('E2E tests', function () {
       get(data);
 
       await page.goto(host);
-      await page.waitForSelector('#location' , { timeout: interval } );
+      await page.waitForSelector('#location', { timeout: interval });
 
       await page.fill('#location', `${data[0].name}`);
-      await page.click('input[type="button"]' , { timeout: interval });
+      await page.click('input[type="button"]', { timeout: interval });
 
       const { get2 } = await handle(endpoints.today(`${data.code}`));
       get2(city);
-      await page.waitForSelector('.forecast-data', { timeout: interval } );
+      await page.waitForSelector('.forecast-data', { timeout: interval });
 
-      const info = await page.$$eval(
-        `#current .condition .forecast-data`,
-        (t) => t.map((s) => s.textContent)
+      const info = await page.$$eval(`#current .condition .forecast-data`, (t) =>
+        t.map((s) => s.textContent)
       );
-      await page.waitForSelector('.forecast-data' , { timeout: interval });
+      await page.waitForSelector('.forecast-data', { timeout: interval });
 
       expect(info[0]).to.equal(city.name);
     });
@@ -113,20 +110,19 @@ describe('E2E tests', function () {
       get(data);
 
       await page.goto(host);
-      await page.waitForSelector('#location' , { timeout: interval });
+      await page.waitForSelector('#location', { timeout: interval });
 
       await page.fill('#location', `${data[0].name}`);
-      await page.click('input[type="button"]' , { timeout: interval });
-      await page.waitForSelector('.forecast-data' , { timeout: interval });
+      await page.click('input[type="button"]', { timeout: interval });
+      await page.waitForSelector('.forecast-data', { timeout: interval });
 
       const { get2 } = await handle(endpoints.today(`${data.code}`));
       get2(city);
 
-      const info = await page.$$eval(
-        `#current .condition .forecast-data`,
-        (t) => t.map((s) => s.textContent)
+      const info = await page.$$eval(`#current .condition .forecast-data`, (t) =>
+        t.map((s) => s.textContent)
       );
-      await page.waitForSelector('.forecast-data' , { timeout: interval });
+      await page.waitForSelector('.forecast-data', { timeout: interval });
 
       expect(info[0]).to.equal(city.name);
       expect(info[1]).to.equal(`${city.forecast.low}°/${city.forecast.high}°`);
@@ -140,20 +136,19 @@ describe('E2E tests', function () {
       get(data);
 
       await page.goto(host);
-      await page.waitForSelector('#location' , { timeout: interval });
+      await page.waitForSelector('#location', { timeout: interval });
 
       await page.fill('#location', `${data[0].name}`);
-      await page.click('input[type="button"]' , { timeout: interval });
+      await page.click('input[type="button"]', { timeout: interval });
 
       const { get2 } = await handle(endpoints.upcommig(`${data.code}`));
       get2(city);
       await page.waitForSelector('.upcoming');
 
-      const info = await page.$$eval(
-        `#upcoming .forecast-info .upcoming`,
-        (t) => t.map((s) => s.textContent)
+      const info = await page.$$eval(`#upcoming .forecast-info .upcoming`, (t) =>
+        t.map((s) => s.textContent)
       );
-      await page.waitForSelector('.upcoming' , { timeout: interval });
+      await page.waitForSelector('.upcoming', { timeout: interval });
 
       expect(info.length).to.equal(city.forecast.length);
     });
@@ -165,24 +160,22 @@ describe('E2E tests', function () {
       get(data);
 
       await page.goto(host);
-      await page.waitForSelector('#location' , { timeout: interval });
+      await page.waitForSelector('#location', { timeout: interval });
 
       await page.fill('#location', `${data[0].name}`);
-      await page.click('input[type="button"]' , { timeout: interval });
+      await page.click('input[type="button"]', { timeout: interval });
 
       const { get2 } = await handle(endpoints.upcommig(`${data.code}`));
       get2(city);
-      await page.waitForSelector('.forecast-data' , { timeout: interval });
+      await page.waitForSelector('.forecast-data', { timeout: interval });
 
       const info = await page.$$eval(
         `#upcoming .forecast-info .upcoming .forecast-data`,
         (t) => t.map((s) => s.textContent)
       );
-      await page.waitForSelector('.forecast-data' , { timeout: interval });
+      await page.waitForSelector('.forecast-data', { timeout: interval });
 
-      expect(info[0]).to.equal(
-        `${city.forecast[0].low}°/${city.forecast[0].high}°`
-      );
+      expect(info[0]).to.equal(`${city.forecast[0].low}°/${city.forecast[0].high}°`);
       expect(info[1]).to.equal(city.forecast[0].condition);
     });
   });

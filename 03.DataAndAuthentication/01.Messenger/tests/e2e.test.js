@@ -4,34 +4,28 @@ const { expect } = require('chai');
 const host = 'http://localhost:3000'; // Application host (NOT service host - that can be anything)
 const interval = 300;
 const timeout = 8000;
-const DEBUG = true;
+const DEBUG = false;
 const slowMo = 500;
 
 const mockData = {
-  blog: {
-    '-MSbypx-13fHPDyzNRtf': {
-      body: 'Lorem ipsum, dolor sit amet consectetur adipisicing elit. Perferendis maiores eligendi quos quidem ex numquam hic. Eos quos similique voluptates accusamus quae voluptas magni ad a ipsum, quia enim debitis cumque quibusdam exercitationem architecto sint nostrum dolorum dolor repudiandae nulla deserunt, dolorem itaque!',
-      id: '-MSbypx-13fHPDyzNRtf',
-      title: 'Unit Testing And Modules',
+  list: [
+    {
+      author: 'Spami',
+      content: 'Hello, are you there?',
     },
-  },
-  comments: {
-    '-MSgyQMjBNfYjW2m6r97': {
-      id: '-MSgyQMjBNfYjW2m6r97',
-      postId: '-MSbypx-13fHPDyzNRtf',
-      text: 'A very interesting post!',
+    {
+      author: 'Garry',
+      content: 'Yep, whats up :?',
     },
-    '-MSgySbWEFw3rhCfIIns': {
-      id: '-MSgySbWEFw3rhCfIIns',
-      postId: '-MSbypx-13fHPDyzNRtf',
-      text: 'Unit Testing is a useful testing technique in programming.',
+    {
+      author: 'George',
+      content: 'Hello, guys! :))',
     },
-  },
+  ],
 };
 
 const endpoints = {
-  blog: '/jsonstore/blog/posts',
-  comments: '/jsonstore/blog/comments',
+  list: '/jsonstore/messenger',
 };
 
 let browser;
@@ -57,82 +51,58 @@ describe('E2E tests', function () {
   });
 
   // Test proper
-  describe('Blog Info', () => {
-    it('Load Posts correct API call', async () => {
-      const { get } = await handle(endpoints.blog);
-      const isCalled = get().isHandled;
-
-      await page.goto(host);
-      await page.waitForSelector('#btnLoadPosts', { timeout: interval });
-      await page.click('text=Load Posts', { timeout: interval });
-      await page.waitForSelector('#posts', { timeout: interval });
-
-      expect(isCalled()).to.be.true;
-    });
-
-    it('Load Posts', async () => {
-      const data = mockData.blog;
-      const { get } = await handle(endpoints.blog);
+  describe('Messenger Info', () => {
+    it('Load Message', async () => {
+      const data = mockData.list;
+      const { get } = await handle(endpoints.list);
       get(data);
 
       await page.goto(host);
-      await page.waitForSelector('#btnLoadPosts', { timeout: interval });
-      await page.click('text=Load Posts', { timeout: interval });
+      await page.waitForSelector('#refresh', { timeout: interval });
 
-      const post = await page.$$eval(`#posts`, (t) => t.map((s) => s.textContent));
-      expect(post.length).to.equal(Object.keys(data).length);
+      await page.click('input[value="Refresh"]', { timeout: interval });
+
+      const post = await page.$$eval(`textarea`, (t) => t.map((s) => s.value));
+
+      expect(post[0]).to.equal(
+        `${data[0].author}: ${data[0].content}\n${data[1].author}: ${data[1].content}\n${data[2].author}: ${data[2].content}`
+      );
     });
 
-    it('Check post title', async () => {
-      const data = mockData.blog;
-      const comment = mockData.comments;
-      const { get } = await handle(endpoints.blog);
-      get(data);
-
-      const { get2 } = await handle(endpoints.comments);
-
-      get2(comment);
-
+    it('Send Message API call', async () => {
+      const data = mockData.list[0];
       await page.goto(host);
-      await page.waitForSelector('#btnLoadPosts', { timeout: interval });
-      await page.click('text=Load Posts', { timeout: interval });
 
-      await page.waitForSelector('#btnViewPost', { timeout: interval });
-      await page.click('text=View', { timeout: interval });
+      const { post } = await handle(endpoints.list);
+      const { onRequest } = post();
 
-      const postTitle = await page.$eval(`#post-title`, (el) => el.textContent);
-      const expectedTitle = data['-MSbypx-13fHPDyzNRtf'].title;
-      expect(postTitle).to.equal(expectedTitle);
-    });
+      await page.waitForSelector('#submit');
 
-    it('Check post body', async () => {
-      const data = mockData.blog;
-      const comment = mockData.comments;
+      await page.fill('input[name="author"]', data.author + '1');
+      await page.fill('input[name="content"]', data.content + '1');
 
-      const { get } = await handle(endpoints.blog);
-      get(data);
-      const { get2 } = await handle(endpoints.comments);
+      const [request] = await Promise.all([
+        onRequest(),
+        page.click('input[value="Send"]', { timeout: interval }),
+      ]);
 
-      get2(comment);
-      await page.goto(host);
-      await page.waitForSelector('#btnLoadPosts', { timeout: interval });
-      await page.click('text=Load Posts', { timeout: interval });
+      const postData = JSON.parse(request.postData());
 
-      await page.waitForSelector('#btnViewPost', { timeout: interval });
-      await page.click('text=View', { timeout: interval });
-
-      const postBody = await page.$eval(`#post-body`, (el) => el.textContent);
-      const expectedBody = data['-MSbypx-13fHPDyzNRtf'].body;
-      expect(postBody).to.equal(expectedBody);
+      expect(postData.author).to.equal(data.author + '1');
+      expect(postData.content).to.equal(data.content + '1');
     });
   });
 });
 
 async function setupContext(context) {
   // Catalog and Details
-  await handleContext(context, endpoints.blog, { get: mockData.blog });
-  await handleContext(context, endpoints.comments('1001'), {
-    get: mockData.comments[0],
+  await handleContext(context, endpoints.list, { get: mockData.list });
+  await handleContext(context, endpoints.list, { post: mockData.list[0] });
+  await handleContext(context, endpoints.info('1001'), {
+    get: mockData.details[0],
+  });
+  await handleContext(context, endpoints.info('1002'), {
+    get: mockData.details[1],
   });
 
   await handleContext(context, endpoints.details('1001'), {

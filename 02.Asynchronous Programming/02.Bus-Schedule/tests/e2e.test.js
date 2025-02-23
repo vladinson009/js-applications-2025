@@ -1,4 +1,4 @@
-const { chromium } = require('playwright-chromium');
+const { chromium } = require('playwright-webkit');
 const { expect } = require('chai');
 
 const host = 'http://localhost:' + 3000; // Application host (NOT service host - that can be anything)
@@ -63,9 +63,7 @@ describe('E2E tests', function () {
 
       await page.waitForSelector('.info', { timeout: interval });
 
-      const search = await page.$$eval(`.info`, (t) =>
-        t.map((s) => s.textContent)
-      );
+      const search = await page.$$eval(`.info`, (t) => t.map((s) => s.textContent));
 
       await page.waitForSelector('.info', { timeout: interval });
       expect(`Next stop ${search[0]}`).to.contains(data.name);
@@ -84,9 +82,7 @@ describe('E2E tests', function () {
 
       await page.click('[value="Arrive"]', { timeout: interval });
 
-      const search = await page.$$eval(`.info`, (t) =>
-        t.map((s) => s.textContent)
-      );
+      const search = await page.$$eval(`.info`, (t) => t.map((s) => s.textContent));
 
       await page.waitForSelector('.info', { timeout: interval });
       expect(`Arriving at ${search[0]}`).to.contains(data.name);
@@ -99,9 +95,7 @@ describe('E2E tests', function () {
       get(data);
       await page.waitForSelector('#depart', { timeout: interval });
 
-      const search = await page.$$eval(`#depart`, (t) =>
-        t.map((s) => s.disabled)
-      );
+      const search = await page.$$eval(`#depart`, (t) => t.map((s) => s.disabled));
 
       await page.waitForSelector('#depart', { timeout: interval });
       expect(search[0]).to.be.false;
@@ -112,17 +106,15 @@ describe('E2E tests', function () {
       const data = mockData.list[0];
       const { get } = await handle(endpoints.catalog(data._id));
       get(data);
-      await page.waitForSelector('#depart' , { timeout: interval });
+      await page.waitForSelector('#depart', { timeout: interval });
 
-      await page.click('[value="Depart"]' , { timeout: interval });
+      await page.click('[value="Depart"]', { timeout: interval });
 
-      await page.waitForSelector('#depart' , { timeout: interval });
+      await page.waitForSelector('#depart', { timeout: interval });
 
-      const search = await page.$$eval(`#depart`, (t) =>
-        t.map((s) => s.disabled)
-      );
+      const search = await page.$$eval(`#depart`, (t) => t.map((s) => s.disabled));
 
-      await page.waitForSelector('#depart' , { timeout: interval });
+      await page.waitForSelector('#depart', { timeout: interval });
       expect(search[0]).to.be.true;
     });
 
@@ -131,17 +123,15 @@ describe('E2E tests', function () {
       const data = mockData.list[0];
       const { get } = await handle(endpoints.catalog(data._id));
       get(data);
-      await page.waitForSelector('#depart' , { timeout: interval });
+      await page.waitForSelector('#depart', { timeout: interval });
 
-      await page.click('[value="Depart"]' , { timeout: interval });
+      await page.click('[value="Depart"]', { timeout: interval });
 
-      await page.waitForSelector('#arrive' , { timeout: interval });
+      await page.waitForSelector('#arrive', { timeout: interval });
 
-      const search = await page.$$eval(`#arrive`, (t) =>
-        t.map((s) => s.disabled)
-      );
+      const search = await page.$$eval(`#arrive`, (t) => t.map((s) => s.disabled));
 
-      await page.waitForSelector('#arrive' , { timeout: interval });
+      await page.waitForSelector('#arrive', { timeout: interval });
       expect(search[0]).to.be.false;
     });
 
@@ -150,19 +140,17 @@ describe('E2E tests', function () {
       const data = mockData.list[0];
       const { get } = await handle(endpoints.catalog(data._id));
       get(data);
-      await page.waitForSelector('#depart' , { timeout: interval });
+      await page.waitForSelector('#depart', { timeout: interval });
 
-      await page.click('[value="Depart"]' , { timeout: interval });
+      await page.click('[value="Depart"]', { timeout: interval });
 
-      await page.waitForSelector('#arrive' , { timeout: interval });
+      await page.waitForSelector('#arrive', { timeout: interval });
 
       await page.click('[value="Arrive"]', { timeout: interval });
 
-      const search = await page.$$eval(`#arrive`, (t) =>
-        t.map((s) => s.disabled)
-      );
+      const search = await page.$$eval(`#arrive`, (t) => t.map((s) => s.disabled));
 
-      await page.waitForSelector('#arrive' , { timeout: interval });
+      await page.waitForSelector('#arrive', { timeout: interval });
       expect(search[0]).to.be.true;
     });
   });

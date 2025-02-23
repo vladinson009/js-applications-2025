@@ -1,43 +1,30 @@
 const { chromium } = require('playwright-webkit');
 const { expect } = require('chai');
 
-const host = 'http://localhost:3000'; // Application host (NOT service host - that can be anything)
-
+const host = 'http://localhost:5500'; // Application host (NOT service host - that can be anything)
 const interval = 300;
 const timeout = 8000;
-const DEBUG = false;
+const DEBUG = true;
 const slowMo = 500;
 
 const mockData = {
   list: [
     {
+      person: 'Maya',
+      phone: '+1-555-7653',
       _id: '1001',
-      title: 'Scalable Vector Graphics',
     },
     {
+      person: 'Peter',
+      phone: '+1-545-7353',
       _id: '1002',
-      title: 'Unix',
-    },
-  ],
-  details: [
-    {
-      _id: '1001',
-      title: 'Scalable Vector Graphics',
-      content:
-        'Scalable Vector Graphics (SVG) is an Extensible Markup Language (XML)-based vector image format for two-dimensional graphics with support for interactivity and animation. The SVG specification is an open standard developed by the World Wide Web Consortium (W3C) since 1999.',
-    },
-    {
-      _id: '1002',
-      title: 'Unix',
-      content:
-        'Unix (trademarked as UNIX) is a family of multitasking, multiuser computer operating systems that derive from the original AT&T Unix, development starting in the 1970s at the Bell Labs research center by Ken Thompson, Dennis Ritchie, and others.',
     },
   ],
 };
 
 const endpoints = {
-  list: '/jsonstore/advanced/articles/list',
-  info: (id) => `/jsonstore/advanced/articles/details/${id}`,
+  catalog: '/jsonstore/phonebook',
+  delete: (id) => `jsonstore/phonebook/${id}`,
 };
 
 let browser;
@@ -63,107 +50,96 @@ describe('E2E tests', function () {
   });
 
   // Test proper
-  describe('Accordion Info', () => {
-    it('Load Posts', async () => {
+  describe('Messenger Info', () => {
+    it('Load Message', async () => {
       const data = mockData.list;
-      const { get } = await handle(endpoints.list);
+      const { get } = await handle(endpoints.catalog);
       get(data);
 
       await page.goto(host);
-      await page.waitForSelector('#main', { timeout: interval });
+      await page.waitForSelector('#btnLoad', { timeout: interval });
 
-      const post = await page.$$eval(`.accordion`, (t) =>
+      await page.click('#btnLoad', { timeout: interval });
+
+      const phone = await page.$$eval(`#phonebook li`, (t) =>
         t.map((s) => s.textContent)
       );
-      expect(post.length).to.equal(data.length);
+
+      expect(phone[0]).to.equal(`${data[0].person}: ${data[0].phone}Delete`);
+      expect(phone[1]).to.equal(`${data[1].person}: ${data[1].phone}Delete`);
     });
 
-    it('Load Details', async () => {
+    it('Length Message', async () => {
       const data = mockData.list;
-      const accordionInfo = mockData.details[0];
-      const { get } = await handle(endpoints.list);
+      const { get } = await handle(endpoints.catalog);
       get(data);
 
-      const { get2 } = await handle(endpoints.info(data._id));
-      get2(accordionInfo);
-
       await page.goto(host);
-      await page.waitForSelector('.accordion', { timeout: interval });
+      await page.waitForSelector('#btnLoad', { timeout: interval });
 
-      const post = await page.$$eval(`.accordion`, (t) =>
+      await page.click('#btnLoad', { timeout: interval });
+
+      const phone = await page.$$eval(`#phonebook li`, (t) =>
         t.map((s) => s.textContent)
       );
 
-      await page.click(`.accordion:has-text("${accordionInfo.title}") >> button`, {
-        timeout: interval,
-      });
-
-      const info = await page.$$eval(`.accordion .extra p`, (t) =>
-        t.map((s) => s.textContent)
-      );
-
-      expect(info[0]).to.contains(accordionInfo.content);
+      expect(phone.length).to.equal(data.length);
     });
 
-    it('Load Details second record', async () => {
-      const data = mockData.list;
-      const accordionInfo = mockData.details[1];
-      const { get } = await handle(endpoints.list);
-      get(data);
-
-      const { get2 } = await handle(endpoints.info(data._id));
-      get2(accordionInfo);
-
+    it('Send Message API call', async () => {
+      const data = mockData.list[0];
       await page.goto(host);
-      await page.waitForSelector('.accordion', { timeout: interval });
 
-      await page.click(`.accordion:has-text("${accordionInfo.title}") >> button`, {
-        timeout: interval,
-      });
+      const { post } = await handle(endpoints.catalog);
+      const { onRequest } = post();
 
-      const info = await page.$$eval(
-        `.accordion:has-text("${accordionInfo.title}") .extra`,
-        (t) => t.map((s) => s.textContent)
-      );
+      await page.waitForSelector('#person', { timeout: interval });
+      await page.waitForSelector('#phone', { timeout: interval });
 
-      expect(info[0]).to.contains(accordionInfo.content);
+      await page.fill('input[id="person"]', data.person + '1');
+      await page.fill('input[id="phone"]', data.phone + '1');
+
+      const [request] = await Promise.all([
+        onRequest(),
+        page.click('#btnCreate', { timeout: interval }),
+      ]);
+
+      const postData = JSON.parse(request.postData());
+
+      expect(postData.person).to.equal(data.person + '1');
+      expect(postData.phone).to.equal(data.phone + '1');
+    });
+
+    it.only('Delete makes correct API call', async () => {
+      const data = mockData.list[0];
+      await page.goto(host);
+      const { del } = await handle(endpoints.delete(data._id));
+      const { onResponse, isHandled } = del({ id: data._id });
+
+      await page.click('#btnLoad', { timeout: interval });
+      await page.waitForSelector('#phonebook>li', { timeout: interval });
+
+      await Promise.all([
+        onResponse(),
+        page.click(
+          `#phonebook li:has-text("${data.person}: ${data.phone}") >> text=Delete`,
+          { timeout: interval }
+        ),
+      ]);
+
+      expect(isHandled()).to.be.true;
     });
   });
 });
 
 async function setupContext(context) {
   // Catalog and Details
-  await handleContext(context, endpoints.list, { get: mockData.list });
-  await handleContext(context, endpoints.info('1001'), {
-    get: mockData.details[0],
-  });
-  await handleContext(context, endpoints.info('1002'), {
-    get: mockData.details[1],
-  });
+  await handleContext(context, endpoints.catalog, { get: mockData.list });
+  await handleContext(context, endpoints.catalog, { post: mockData.list[0] });
 
-  await handleContext(context, endpoints.details('1001'), {
-    get: mockData.catalog[0],
+  await handleContext(context, endpoints.delete('1001'), {
+    get: mockData.list[0],
   });
-  await handleContext(context, endpoints.details('1002'), {
-    get: mockData.catalog[1],
-  });
-  await handleContext(context, endpoints.details('1003'), {
-    get: mockData.catalog[2],
-  });
-
-  await handleContext(
-    endpoints.profile('0001'),
-    { get: mockData.catalog.slice(0, 2) },
-    context
-  );
-
-  await handleContext(endpoints.total('1001'), { get: 6 }, context);
-  await handleContext(endpoints.total('1002'), { get: 4 }, context);
-  await handleContext(endpoints.total('1003'), { get: 7 }, context);
-
-  await handleContext(endpoints.own('1001', '0001'), { get: 1 }, context);
-  await handleContext(endpoints.own('1002', '0001'), { get: 0 }, context);
-  await handleContext(endpoints.own('1003', '0001'), { get: 0 }, context);
 
   // Block external calls
   await context.route(

@@ -1,4 +1,4 @@
-const { chromium } = require('playwright-webkit');
+const { chromium } = require('playwright-chromium');
 const { expect } = require('chai');
 
 const host = 'http://localhost:3000'; // Application host (NOT service host - that can be anything)
@@ -9,35 +9,24 @@ const DEBUG = false;
 const slowMo = 500;
 
 const mockData = {
-  list: [
+  catalog: [
     {
+      author: 'Author1',
+      title: 'Book1',
       _id: '1001',
-      title: 'Scalable Vector Graphics',
     },
     {
+      author: 'Author2',
+      title: 'Book2',
       _id: '1002',
-      title: 'Unix',
-    },
-  ],
-  details: [
-    {
-      _id: '1001',
-      title: 'Scalable Vector Graphics',
-      content:
-        'Scalable Vector Graphics (SVG) is an Extensible Markup Language (XML)-based vector image format for two-dimensional graphics with support for interactivity and animation. The SVG specification is an open standard developed by the World Wide Web Consortium (W3C) since 1999.',
-    },
-    {
-      _id: '1002',
-      title: 'Unix',
-      content:
-        'Unix (trademarked as UNIX) is a family of multitasking, multiuser computer operating systems that derive from the original AT&T Unix, development starting in the 1970s at the Bell Labs research center by Ken Thompson, Dennis Ritchie, and others.',
     },
   ],
 };
 
 const endpoints = {
-  list: '/jsonstore/advanced/articles/list',
-  info: (id) => `/jsonstore/advanced/articles/details/${id}`,
+  catalog: '/jsonstore/collections/books',
+  details: (id) => `/jsonstore/collections/books/${id}`,
+  delete: (id) => `/jsonstore/collections/books/${id}`,
 };
 
 let browser;
@@ -49,7 +38,9 @@ describe('E2E tests', function () {
   this.timeout(DEBUG ? 120000 : timeout);
   before(
     async () =>
-      (browser = await chromium.launch(DEBUG ? { headless: false, slowMo } : {}))
+    (browser = await chromium.launch(
+      DEBUG ? { headless: false, slowMo } : {}
+    ))
   );
   after(async () => await browser.close());
   beforeEach(async () => {
@@ -63,107 +54,96 @@ describe('E2E tests', function () {
   });
 
   // Test proper
-  describe('Accordion Info', () => {
-    it('Load Posts', async () => {
-      const data = mockData.list;
-      const { get } = await handle(endpoints.list);
+  describe('Book Library', () => {
+    it('Load Books', async () => {
+      const data = mockData.catalog;
+      const { get } = await handle(endpoints.catalog);
       get(data);
 
       await page.goto(host);
-      await page.waitForSelector('#main', { timeout: interval });
+      await page.waitForSelector('#loadBooks', { timeout: interval });
 
-      const post = await page.$$eval(`.accordion`, (t) =>
+      await page.click('#loadBooks', { timeout: interval });
+
+      const books = await page.$$eval(`tbody tr`, (t) =>
         t.map((s) => s.textContent)
       );
-      expect(post.length).to.equal(data.length);
+
+      expect(books.length).to.equal(data.length);
     });
 
-    it('Load Details', async () => {
-      const data = mockData.list;
-      const accordionInfo = mockData.details[0];
-      const { get } = await handle(endpoints.list);
+    it('Check books info', async () => {
+      const data = mockData.catalog;
+      const { get } = await handle(endpoints.catalog);
       get(data);
 
-      const { get2 } = await handle(endpoints.info(data._id));
-      get2(accordionInfo);
-
       await page.goto(host);
-      await page.waitForSelector('.accordion', { timeout: interval });
+      await page.waitForSelector('#loadBooks', { timeout: interval });
 
-      const post = await page.$$eval(`.accordion`, (t) =>
+      await page.click('#loadBooks', { timeout: interval });
+
+      const books = await page.$$eval(`tbody tr td`, (t) =>
         t.map((s) => s.textContent)
       );
 
-      await page.click(`.accordion:has-text("${accordionInfo.title}") >> button`, {
-        timeout: interval,
-      });
-
-      const info = await page.$$eval(`.accordion .extra p`, (t) =>
-        t.map((s) => s.textContent)
-      );
-
-      expect(info[0]).to.contains(accordionInfo.content);
+      expect(books[0]).to.equal(data[0].title);
+      expect(books[1]).to.equal(data[0].author);
     });
 
-    it('Load Details second record', async () => {
-      const data = mockData.list;
-      const accordionInfo = mockData.details[1];
-      const { get } = await handle(endpoints.list);
-      get(data);
-
-      const { get2 } = await handle(endpoints.info(data._id));
-      get2(accordionInfo);
-
+    it('Create Book', async () => {
+      const data = mockData.catalog[0];
       await page.goto(host);
-      await page.waitForSelector('.accordion', { timeout: interval });
 
-      await page.click(`.accordion:has-text("${accordionInfo.title}") >> button`, {
-        timeout: interval,
-      });
+      const { post } = await handle(endpoints.catalog);
+      const { onRequest } = post();
 
-      const info = await page.$$eval(
-        `.accordion:has-text("${accordionInfo.title}") .extra`,
-        (t) => t.map((s) => s.textContent)
-      );
+      await page.waitForSelector('form', { timeout: interval });
 
-      expect(info[0]).to.contains(accordionInfo.content);
+      await page.fill('input[name="title"]', data.title + '1');
+      await page.fill('input[name="author"]', data.author + '1');
+
+      const [request] = await Promise.all([
+        onRequest(),
+        page.click('text=Submit', { timeout: interval }),
+      ]);
+
+      const postData = JSON.parse(request.postData());
+
+      expect(postData.title).to.equal(data.title + '1');
+      expect(postData.author).to.equal(data.author + '1');
+    });
+
+    it('Edit should populate form with correct data', async () => {
+      const info = mockData.catalog;
+      const data = mockData.catalog[0];
+      await page.goto(host);
+
+      const { get } = await handle(endpoints.catalog);
+      get(info);
+
+      await page.click('#loadBooks', { timeout: interval });
+
+      const { get2 } = await handle(endpoints.details(data._id));
+      get2(data);
+
+      await page.click(`tr:has-text("${data.title}") >> text=Edit`, { timeout: interval });
+
+      await page.waitForSelector('form', { timeout: interval });
+
+      const inputs = await page.$$eval('form input', t => t.map(i => i.value));
+
+      expect(inputs[0]).to.equal(data.title);
+      expect(inputs[1]).to.equal(data.author);
     });
   });
 });
 
 async function setupContext(context) {
   // Catalog and Details
-  await handleContext(context, endpoints.list, { get: mockData.list });
-  await handleContext(context, endpoints.info('1001'), {
-    get: mockData.details[0],
-  });
-  await handleContext(context, endpoints.info('1002'), {
-    get: mockData.details[1],
-  });
-
+  await handleContext(context, endpoints.catalog, { get: mockData.catalog });
   await handleContext(context, endpoints.details('1001'), {
     get: mockData.catalog[0],
   });
-  await handleContext(context, endpoints.details('1002'), {
-    get: mockData.catalog[1],
-  });
-  await handleContext(context, endpoints.details('1003'), {
-    get: mockData.catalog[2],
-  });
-
-  await handleContext(
-    endpoints.profile('0001'),
-    { get: mockData.catalog.slice(0, 2) },
-    context
-  );
-
-  await handleContext(endpoints.total('1001'), { get: 6 }, context);
-  await handleContext(endpoints.total('1002'), { get: 4 }, context);
-  await handleContext(endpoints.total('1003'), { get: 7 }, context);
-
-  await handleContext(endpoints.own('1001', '0001'), { get: 1 }, context);
-  await handleContext(endpoints.own('1002', '0001'), { get: 0 }, context);
-  await handleContext(endpoints.own('1003', '0001'), { get: 0 }, context);
 
   // Block external calls
   await context.route(
