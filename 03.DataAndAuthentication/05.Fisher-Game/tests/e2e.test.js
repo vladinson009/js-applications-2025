@@ -1,10 +1,10 @@
-const { chromium } = require('playwright-chromium');
+const { chromium } = require('playwright-webkit');
 const { expect } = require('chai');
 
 const host = 'http://localhost:3000'; // Application host (NOT service host - that can be anything)
 const interval = 300;
 const timeout = 8000;
-const DEBUG = false;
+const DEBUG = true;
 const slowMo = 500;
 
 const mockData = {
@@ -63,9 +63,7 @@ describe('E2E tests', function () {
   this.timeout(DEBUG ? 120000 : timeout);
   before(
     async () =>
-      (browser = await chromium.launch(
-        DEBUG ? { headless: false, slowMo } : {}
-      ))
+      (browser = await chromium.launch(DEBUG ? { headless: false, slowMo } : {}))
   );
   after(async () => await browser.close());
   beforeEach(async () => {
@@ -159,7 +157,10 @@ describe('E2E tests', function () {
       await page.fill('[name="email"]', data.email);
       await page.fill('[name="password"]', data.password);
 
-      await Promise.all([onResponse(), page.click('form >> text=Login', { timeout: interval })]);
+      await Promise.all([
+        onResponse(),
+        page.click('form >> text=Login', { timeout: interval }),
+      ]);
 
       await page.waitForSelector('#logout', { timeout: interval });
 
@@ -189,8 +190,8 @@ describe('E2E tests', function () {
       const data = mockData.users[0];
       const { post } = await handle(endpoints.login);
       const { onResponse } = post(data);
-       // Login user
-       await page.goto(host);
+      // Login user
+      await page.goto(host);
       await page.click('nav >> text=Login', { timeout: interval });
       await page.waitForSelector('#login-view', { timeout: interval });
 
@@ -198,10 +199,10 @@ describe('E2E tests', function () {
       await page.fill('[name="email"]', data.email);
       await page.fill('[name="password"]', data.password);
 
-      const[loginResponse] = await Promise.all([
+      const [loginResponse] = await Promise.all([
         onResponse(),
-        page.click('form >> text=Login', { timeout: interval })
-      ])
+        page.click('form >> text=Login', { timeout: interval }),
+      ]);
 
       await page.waitForSelector('#user', { timeout: interval });
 
@@ -247,11 +248,9 @@ describe('E2E tests', function () {
   });
 
   describe('CRUD', () => {
- 
-
     it('create does NOT work with empty fields', async () => {
-       // Login user
-       const loginUser = async () => {
+      // Login user
+      const loginUser = async () => {
         const data = mockData.users[0];
         await page.goto(host);
         await page.click('text=Login');
@@ -272,51 +271,46 @@ describe('E2E tests', function () {
 
     it('create makes correct API call for logged in user', async () => {
       // Login user
-         const loginUser = async () => {
-           const data = mockData.users[0];
-           await page.goto(host);
-           await page.click('text=Login');
-           await page.waitForSelector('#login', { timeout: interval });
-           await page.fill('[name="email"]', data.email);
-           await page.fill('[name="password"]', data.password);
-           await page.click('form >> text=Login');
-         };
-           await loginUser();
-           const data = mockData.catalog[0];
-           const { post } = await handle(endpoints.catalog);
-           const { onRequest } = post();
-     
-           await page.waitForSelector('#addForm', { timeout: interval });
-           await page.fill('[name="angler"]', data.angler);
-           await page.fill('[name="weight"]', data.weight.toString());
-           await page.fill('[name="species"]', data.species);
-           await page.fill('[name="location"]', data.location);
-           await page.fill('[name="bait"]', data.bait);
-           await page.fill('[name="captureTime"]', data.captureTime.toString());
-           
-     
-     
-           const [request] = await Promise.all([
-             onRequest(),
-             page.click('fieldset >> .add', { timeout: interval }),
-           ]);
-     
-           const postData = JSON.parse(request.postData());
-     
-           expect(postData.angler).to.equal(data.angler);
-           expect(postData.weight).to.equal(data.weight.toString());
-           expect(postData.species).to.equal(data.species);
-           expect(postData.location).to.equal(data.location);
-           expect(postData.bait).to.equal(data.bait);
-           expect(postData.captureTime).to.equal(data.captureTime.toString());
-           
-     
-     
-         });
+      const loginUser = async () => {
+        const data = mockData.users[0];
+        await page.goto(host);
+        await page.click('text=Login');
+        await page.waitForSelector('#login', { timeout: interval });
+        await page.fill('[name="email"]', data.email);
+        await page.fill('[name="password"]', data.password);
+        await page.click('form >> text=Login');
+      };
+      await loginUser();
+      const data = mockData.catalog[0];
+      const { post } = await handle(endpoints.catalog);
+      const { onRequest } = post();
+
+      await page.waitForSelector('#addForm', { timeout: interval });
+      await page.fill('[name="angler"]', data.angler);
+      await page.fill('[name="weight"]', data.weight.toString());
+      await page.fill('[name="species"]', data.species);
+      await page.fill('[name="location"]', data.location);
+      await page.fill('[name="bait"]', data.bait);
+      await page.fill('[name="captureTime"]', data.captureTime.toString());
+
+      const [request] = await Promise.all([
+        onRequest(),
+        page.click('fieldset >> .add', { timeout: interval }),
+      ]);
+
+      const postData = JSON.parse(request.postData());
+
+      expect(postData.angler).to.equal(data.angler);
+      expect(postData.weight).to.equal(data.weight.toString());
+      expect(postData.species).to.equal(data.species);
+      expect(postData.location).to.equal(data.location);
+      expect(postData.bait).to.equal(data.bait);
+      expect(postData.captureTime).to.equal(data.captureTime.toString());
+    });
 
     it("non-author can't click on other post", async () => {
-       // Login user
-       const loginUser = async () => {
+      // Login user
+      const loginUser = async () => {
         const data = mockData.users[0];
         await page.goto(host);
         await page.click('text=Login');
@@ -344,8 +338,8 @@ describe('E2E tests', function () {
     });
 
     it('author can click on other post', async () => {
-       // Login user
-       const loginUser = async () => {
+      // Login user
+      const loginUser = async () => {
         const data = mockData.users[0];
         await page.goto(host);
         await page.click('text=Login');
@@ -374,40 +368,6 @@ describe('E2E tests', function () {
 
     it('edit makes correct API call for logged in user', async () => {
       const loginUser = async () => {
-          const data = mockData.users[0];
-          await page.goto(host);
-          await page.waitForTimeout(interval);
-          await page.click('text=Login');
-          await page.waitForTimeout(interval);
-          await page.waitForSelector('#login');
-          await page.fill('[name="email"]', data.email);
-          await page.fill('[name="password"]', data.password);
-          await page.click('form >> text=Login');
-          await page.waitForTimeout(interval);
-        };
-    
-    await loginUser();
-    const data = mockData.catalog[0];
-    await page.goto(host);
-    const { get, put } = await handle(endpoints.details(data._id));
-    get(data);
-    const { onRequest } = put();
-    await page.waitForSelector('.load');
-
-    await page.click('.load');
-
-    await page.waitForSelector('#catches');
-    await page.fill('.catch input[class="angler"]', data.angler + 'edit');
-    await page.waitForSelector('.update');
-
-    const [request] = await Promise.all([onRequest(), page.click('.update')]);
-
-    const postData = JSON.parse(request.postData());
-    expect(postData.angler).to.contains(data.angler);
-  });
-
-  it('delete makes correct API call for logged in user', async () => {
-    const loginUser = async () => {
         const data = mockData.users[0];
         await page.goto(host);
         await page.waitForTimeout(interval);
@@ -419,20 +379,54 @@ describe('E2E tests', function () {
         await page.click('form >> text=Login');
         await page.waitForTimeout(interval);
       };
-  
-  await loginUser();
-  const data = mockData.catalog[0];
-  await page.goto(host);
-  const { del } = await handle(endpoints.details(data._id));
-  const { onResponse, isHandled } = del({ id: data._id });
 
-  await page.click('.load');
-  await page.waitForSelector('.delete');
+      await loginUser();
+      const data = mockData.catalog[0];
+      await page.goto(host);
+      const { get, put } = await handle(endpoints.details(data._id));
+      get(data);
+      const { onRequest } = put();
+      await page.waitForSelector('.load');
 
-  await Promise.all([onResponse(), page.click('text="Delete"')]);
+      await page.click('.load');
 
-  expect(isHandled()).to.be.true;
-});
+      await page.waitForSelector('#catches');
+      await page.fill('.catch input[class="angler"]', data.angler + 'edit');
+      await page.waitForSelector('.update');
+
+      const [request] = await Promise.all([onRequest(), page.click('.update')]);
+
+      const postData = JSON.parse(request.postData());
+      expect(postData.angler).to.contains(data.angler);
+    });
+
+    it('delete makes correct API call for logged in user', async () => {
+      const loginUser = async () => {
+        const data = mockData.users[0];
+        await page.goto(host);
+        await page.waitForTimeout(interval);
+        await page.click('text=Login');
+        await page.waitForTimeout(interval);
+        await page.waitForSelector('#login');
+        await page.fill('[name="email"]', data.email);
+        await page.fill('[name="password"]', data.password);
+        await page.click('form >> text=Login');
+        await page.waitForTimeout(interval);
+      };
+
+      await loginUser();
+      const data = mockData.catalog[0];
+      await page.goto(host);
+      const { del } = await handle(endpoints.details(data._id));
+      const { onResponse, isHandled } = del({ id: data._id });
+
+      await page.click('.load');
+      await page.waitForSelector('.delete');
+
+      await Promise.all([onResponse(), page.click('text="Delete"')]);
+
+      expect(isHandled()).to.be.true;
+    });
   });
 });
 

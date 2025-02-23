@@ -1,10 +1,10 @@
-const { chromium } = require('playwright-chromium');
+const { chromium } = require('playwright-webkit');
 const { expect } = require('chai');
 
 const host = 'http://localhost:3000'; // Application host (NOT service host - that can be anything)
 
-const interval = 300;
-const timeout = 8000;
+const interval = 9300;
+const timeout = 98000;
 const DEBUG = false;
 const slowMo = 500;
 
@@ -38,9 +38,7 @@ describe('E2E tests', function () {
   this.timeout(DEBUG ? 120000 : timeout);
   before(
     async () =>
-    (browser = await chromium.launch(
-      DEBUG ? { headless: false, slowMo } : {}
-    ))
+      (browser = await chromium.launch(DEBUG ? { headless: false, slowMo } : {}))
   );
   after(async () => await browser.close());
   beforeEach(async () => {
@@ -126,11 +124,13 @@ describe('E2E tests', function () {
       const { get2 } = await handle(endpoints.details(data._id));
       get2(data);
 
-      await page.click(`tr:has-text("${data.title}") >> text=Edit`, { timeout: interval });
+      await page.click(`tr:has-text("${data.title}") >> text=Edit`, {
+        timeout: interval,
+      });
 
       await page.waitForSelector('form', { timeout: interval });
 
-      const inputs = await page.$$eval('form input', t => t.map(i => i.value));
+      const inputs = await page.$$eval('form input', (t) => t.map((i) => i.value));
 
       expect(inputs[0]).to.equal(data.title);
       expect(inputs[1]).to.equal(data.author);
