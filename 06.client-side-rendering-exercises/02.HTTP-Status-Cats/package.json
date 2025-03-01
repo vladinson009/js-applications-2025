@@ -1,5 +1,5 @@
 {
-  "name": "02.movie",
+  "name": "02.status-cats",
   "version": "1.0.0",
   "main": "index.html",
   "scripts": {
@@ -13,9 +13,8 @@
     "page": "^1.11.6"
   },
   "devDependencies": {
-    "chai": "4.3.4",
     "http-server": "14.1.1",
     "mocha": "8.3.2",
-    "playwright-webkit": "^1.50.1"
+    "chai": "4.3.4"
   }
 }

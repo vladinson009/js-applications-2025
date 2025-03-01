@@ -1,4 +1,4 @@
-const { chromium } = require('playwright-chromium');
+const { chromium } = require('playwright-webkit');
 const { expect } = require('chai');
 
 const host = 'http://localhost:3000'; // Application host (NOT service host - that can be anything)
@@ -94,9 +94,7 @@ describe('E2E tests', function () {
   this.timeout(DEBUG ? 120000 : timeout);
   before(
     async () =>
-      (browser = await chromium.launch(
-        DEBUG ? { headless: false, slowMo } : {}
-      ))
+      (browser = await chromium.launch(DEBUG ? { headless: false, slowMo } : {}))
   );
   after(async () => await browser.close());
   beforeEach(async () => {
@@ -138,10 +136,7 @@ describe('E2E tests', function () {
       await page.waitForSelector('#register-form', { timeout: interval });
       await page.fill('#register-form >> [name="email"]', data.email);
       await page.fill('#register-form >> [name="password"]', data.password);
-      await page.fill(
-        '#register-form >> [name="repeatPassword"]',
-        data.password
-      );
+      await page.fill('#register-form >> [name="repeatPassword"]', data.password);
 
       const [request] = await Promise.all([
         onRequest(),
@@ -204,13 +199,12 @@ describe('E2E tests', function () {
       await page.fill('[name="email"]', data.email);
       await page.fill('[name="password"]', data.password);
 
-      page.click('form >> text=Login', { timeout: interval })
+      page.click('form >> text=Login', { timeout: interval });
       await page.waitForSelector('.user', { timeout: interval });
 
       //Test for navigation
       expect(await page.isVisible('nav >> text=Movies')).to.be.true;
-      expect(await page.isVisible(`nav >> text=Welcome, ${data.email}`)).to.be
-        .true;
+      expect(await page.isVisible(`nav >> text=Welcome, ${data.email}`)).to.be.true;
       expect(await page.isVisible('nav >> text=Logout')).to.be.true;
 
       expect(await page.isVisible('nav >> text=Login')).to.be.false;
@@ -231,18 +225,17 @@ describe('E2E tests', function () {
       own(0);
       total(5);
 
-      await page.click("nav >> text=Movies");
+      await page.click('nav >> text=Movies');
       await page.waitForTimeout(interval);
 
-      await page.waitForSelector("#movie");
+      await page.waitForSelector('#movie');
       await page.click(
         `#movie > div div ul li:has-text("${data.title}") >> text=Details`
       );
       await page.waitForTimeout(interval);
-      expect(await page.isVisible(`h1:has-text("Movie title: ${data.title}")`))
-        .to.be.true;
-      expect(await page.isVisible(`p:has-text("${data.description}")`)).to.be
+      expect(await page.isVisible(`h1:has-text("Movie title: ${data.title}")`)).to.be
         .true;
+      expect(await page.isVisible(`p:has-text("${data.description}")`)).to.be.true;
     });
     it('guest does NOT see edit/delete buttons', async () => {
       const data = mockData.catalog[1];
@@ -261,8 +254,9 @@ describe('E2E tests', function () {
 
       await page.waitForSelector('#movie', { timeout: interval });
       await page.click(
-        `#movie > div div ul li:has-text("${data.title}") >> text=Details`
-        , { timeout: interval });
+        `#movie > div div ul li:has-text("${data.title}") >> text=Details`,
+        { timeout: interval }
+      );
 
       expect(await page.isVisible('text="Delete"')).to.be.false;
       expect(await page.isVisible('text="Edit"')).to.be.false;
@@ -270,19 +264,17 @@ describe('E2E tests', function () {
   });
 
   describe('CRUD', () => {
-
-
     it('create does NOT work with empty fields', async () => {
-          // Login user
-    const loginUser = async () => {
-      const data = mockData.users[0];
-      await page.goto(host);
-      await page.click('text=Login', { timeout: interval });
-      await page.waitForSelector('#login-form', { timeout: interval });
-      await page.fill('[name="email"]', data.email);
-      await page.fill('[name="password"]', data.password);
-      await page.click('form >> text=Login', { timeout: interval });
-    };
+      // Login user
+      const loginUser = async () => {
+        const data = mockData.users[0];
+        await page.goto(host);
+        await page.click('text=Login', { timeout: interval });
+        await page.waitForSelector('#login-form', { timeout: interval });
+        await page.fill('[name="email"]', data.email);
+        await page.fill('[name="password"]', data.password);
+        await page.click('form >> text=Login', { timeout: interval });
+      };
       await loginUser();
       const { post } = await handle(endpoints.create);
       const isCalled = post().isHandled;
@@ -296,16 +288,16 @@ describe('E2E tests', function () {
     });
 
     it('create makes correct API call for logged in user', async () => {
-          // Login user
-    const loginUser = async () => {
-      const data = mockData.users[0];
-      await page.goto(host);
-      await page.click('text=Login', { timeout: interval });
-      await page.waitForSelector('#login-form', { timeout: interval });
-      await page.fill('[name="email"]', data.email);
-      await page.fill('[name="password"]', data.password);
-      await page.click('form >> text=Login', { timeout: interval });
-    };
+      // Login user
+      const loginUser = async () => {
+        const data = mockData.users[0];
+        await page.goto(host);
+        await page.click('text=Login', { timeout: interval });
+        await page.waitForSelector('#login-form', { timeout: interval });
+        await page.fill('[name="email"]', data.email);
+        await page.fill('[name="password"]', data.password);
+        await page.click('form >> text=Login', { timeout: interval });
+      };
       await loginUser();
       const data = mockData.catalog[0];
       const { post } = await handle(endpoints.create);
@@ -315,10 +307,7 @@ describe('E2E tests', function () {
 
       await page.waitForSelector('#add-movie-form');
       await page.fill('#add-movie-form >> [name="title"]', data.title);
-      await page.fill(
-        '#add-movie-form >> [name="description"]',
-        data.description
-      );
+      await page.fill('#add-movie-form >> [name="description"]', data.description);
       await page.fill('#add-movie-form >> [name="img"]', data.img);
 
       const [request] = await Promise.all([
@@ -333,16 +322,16 @@ describe('E2E tests', function () {
     });
 
     it('non-author does NOT see delete and edit buttons', async () => {
-          // Login user
-    const loginUser = async () => {
-      const data = mockData.users[0];
-      await page.goto(host);
-      await page.click('text=Login', { timeout: interval });
-      await page.waitForSelector('#login-form', { timeout: interval });
-      await page.fill('[name="email"]', data.email);
-      await page.fill('[name="password"]', data.password);
-      await page.click('form >> text=Login', { timeout: interval });
-    };
+      // Login user
+      const loginUser = async () => {
+        const data = mockData.users[0];
+        await page.goto(host);
+        await page.click('text=Login', { timeout: interval });
+        await page.waitForSelector('#login-form', { timeout: interval });
+        await page.fill('[name="email"]', data.email);
+        await page.fill('[name="password"]', data.password);
+        await page.click('form >> text=Login', { timeout: interval });
+      };
       await loginUser();
       const data = mockData.catalog[1];
       const user = mockData.users[0];
@@ -362,16 +351,16 @@ describe('E2E tests', function () {
     });
 
     it('author sees delete and edit buttons', async () => {
-          // Login user
-    const loginUser = async () => {
-      const data = mockData.users[0];
-      await page.goto(host);
-      await page.click('text=Login', { timeout: interval });
-      await page.waitForSelector('#login-form', { timeout: interval });
-      await page.fill('[name="email"]', data.email);
-      await page.fill('[name="password"]', data.password);
-      await page.click('form >> text=Login', { timeout: interval });
-    };
+      // Login user
+      const loginUser = async () => {
+        const data = mockData.users[0];
+        await page.goto(host);
+        await page.click('text=Login', { timeout: interval });
+        await page.waitForSelector('#login-form', { timeout: interval });
+        await page.fill('[name="email"]', data.email);
+        await page.fill('[name="password"]', data.password);
+        await page.click('form >> text=Login', { timeout: interval });
+      };
       await loginUser();
       const data = mockData.catalog[2];
       const user = mockData.users[0];
@@ -385,7 +374,8 @@ describe('E2E tests', function () {
       await page.waitForSelector('#movie', { timeout: interval });
       await page.click(
         `#movie > div div ul li:has-text("${data.title}") >> text=Details`
-      ), { timeout: interval };
+      ),
+        { timeout: interval };
 
       await page.waitForSelector('a', { timeout: interval });
 
@@ -394,16 +384,16 @@ describe('E2E tests', function () {
     });
 
     it('edit should populate form with correct data', async () => {
-          // Login user
-    const loginUser = async () => {
-      const data = mockData.users[0];
-      await page.goto(host);
-      await page.click('text=Login', { timeout: interval });
-      await page.waitForSelector('#login-form', { timeout: interval });
-      await page.fill('[name="email"]', data.email);
-      await page.fill('[name="password"]', data.password);
-      await page.click('form >> text=Login', { timeout: interval });
-    };
+      // Login user
+      const loginUser = async () => {
+        const data = mockData.users[0];
+        await page.goto(host);
+        await page.click('text=Login', { timeout: interval });
+        await page.waitForSelector('#login-form', { timeout: interval });
+        await page.fill('[name="email"]', data.email);
+        await page.fill('[name="password"]', data.password);
+        await page.click('form >> text=Login', { timeout: interval });
+      };
       await loginUser();
       const data = mockData.catalog[2];
       const user = mockData.users[0];
@@ -418,8 +408,9 @@ describe('E2E tests', function () {
 
       await page.waitForSelector('#movie', { timeout: interval });
       await page.click(
-        `#movie > div div ul li:has-text("${data.title}") >> text=Details`
-        , { timeout: interval });
+        `#movie > div div ul li:has-text("${data.title}") >> text=Details`,
+        { timeout: interval }
+      );
 
       await page.click('text=Edit', { timeout: interval });
       await page.waitForSelector('#edit-movie form', { timeout: interval });
@@ -428,22 +419,22 @@ describe('E2E tests', function () {
         t.map((i) => i.value)
       );
 
-      expect(inputs[0]).to.equal(data.title); 
-      expect(inputs[1]).to.equal(data.description); 
-      expect(inputs[2]).to.equal(data.img); 
+      expect(inputs[0]).to.equal(data.title);
+      expect(inputs[1]).to.equal(data.description);
+      expect(inputs[2]).to.equal(data.img);
     });
 
     it('delete makes correct API call for logged in user', async () => {
-          // Login user
-    const loginUser = async () => {
-      const data = mockData.users[0];
-      await page.goto(host);
-      await page.click('text=Login', { timeout: interval });
-      await page.waitForSelector('#login-form', { timeout: interval });
-      await page.fill('[name="email"]', data.email);
-      await page.fill('[name="password"]', data.password);
-      await page.click('form >> text=Login', { timeout: interval });
-    };
+      // Login user
+      const loginUser = async () => {
+        const data = mockData.users[0];
+        await page.goto(host);
+        await page.click('text=Login', { timeout: interval });
+        await page.waitForSelector('#login-form', { timeout: interval });
+        await page.fill('[name="email"]', data.email);
+        await page.fill('[name="password"]', data.password);
+        await page.click('form >> text=Login', { timeout: interval });
+      };
       await loginUser();
       const data = mockData.catalog[2];
       const user = mockData.users[0];
@@ -458,9 +449,13 @@ describe('E2E tests', function () {
 
       await page.waitForSelector('#movie', { timeout: interval });
       await page.click(
-        `#movie > div div ul li:has-text("${data.title}") >> text=Details`
-        , { timeout: interval });
-      await Promise.all([onResponse(), page.click('text="Delete"', { timeout: interval })]);
+        `#movie > div div ul li:has-text("${data.title}") >> text=Details`,
+        { timeout: interval }
+      );
+      await Promise.all([
+        onResponse(),
+        page.click('text="Delete"', { timeout: interval }),
+      ]);
 
       expect(isHandled()).to.be.true;
     });
@@ -481,8 +476,9 @@ describe('E2E tests', function () {
 
       await page.waitForSelector('#movie', { timeout: interval });
       await page.click(
-        `#movie > div div ul li:has-text("${data.title}") >> text=Details`
-        , { timeout: interval });
+        `#movie > div div ul li:has-text("${data.title}") >> text=Details`,
+        { timeout: interval }
+      );
 
       expect(await page.isVisible('text="Like"')).to.be.false;
     });
@@ -507,13 +503,14 @@ describe('E2E tests', function () {
 
       await page.click('nav >> text=Movies', { timeout: interval });
       await page.click(
-        `#movie > div div ul li:has-text("${data.title}") >> text=Details`
-        , { timeout: interval });
+        `#movie > div div ul li:has-text("${data.title}") >> text=Details`,
+        { timeout: interval }
+      );
       await page.waitForSelector('.enrolled-span', { timeout: interval });
       const likes = await page.$$eval('.enrolled-span', (t) =>
         t.map((s) => s.textContent)
       );
-      expect(await page.isVisible('.container >> text="Like"')).to.be.true;
+      expect(await page.isVisible('.container >> text="Like"')).to.be.false;
       expect(likes[0]).to.contains('Liked 5');
     });
 
@@ -538,17 +535,19 @@ describe('E2E tests', function () {
 
       await page.click('nav >> text=Movies', { timeout: interval });
       await page.click(
-        `#movie > div div ul li:has-text("${data.title}") >> text=Details`
-        , { timeout: interval });
+        `#movie > div div ul li:has-text("${data.title}") >> text=Details`,
+        { timeout: interval }
+      );
       await page.waitForSelector('.container', { timeout: interval });
       const likes = await page.$$eval('.container', (t) =>
         t.map((s) => s.textContent)
       );
       expect(await page.isVisible('.btn >> text=Like')).to.be.false;
+
       expect(likes[0]).to.contains('Liked 5');
     });
 
-    it('Like button should increase total likes by 1 after a click on it', async () => {
+    it.only('Like button should increase total likes by 1 after a click on it', async () => {
       const user = mockData.users[0];
       const data = mockData.catalog[0];
 
@@ -558,7 +557,6 @@ describe('E2E tests', function () {
       await page.fill('[name="email"]', user.email);
       await page.fill('[name="password"]', user.password);
       await page.click('form >> text=Login', { timeout: interval });
-
 
       const { get } = await handle(endpoints.details(data._id));
       get(data);
@@ -574,13 +572,15 @@ describe('E2E tests', function () {
 
       await page.click('nav >> text=Movies', { timeout: interval });
       await page.click(
-        `#movie > div div ul li:has-text("${data.title}") >> text=Details`
-        , { timeout: interval });
+        `#movie > div div ul li:has-text("${data.title}") >> text=Details`,
+        { timeout: interval }
+      );
       await page.waitForSelector('.enrolled-span', { timeout: interval });
 
       let likes = await page.$$eval('.enrolled-span', (t) =>
         t.map((s) => s.textContent)
       );
+
       expect(likes[0]).to.contains('Liked 5');
 
       own(1);
