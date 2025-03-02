@@ -21,7 +21,7 @@ function movieTemplate(movie) {
                       <a href="#"> </a>
                     </div>
                     <div class="card-footer">
-                    <button data-id="${movie._id}" type="button" class="btn btn-info">Details</button>
+                    <button id="${movie._id}" data-id="${movie._id}" type="button" class="btn btn-info">Details</button>
                     </div>`;
   return liElement;
 }

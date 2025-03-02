@@ -80,7 +80,7 @@ function addMovie() {
   showAddMovie(main);
 }
 async function onDetails(e) {
-  await showDetailsPage(main, e.currentTarget.dataset.id);
+  await showDetailsPage(main, e.target.dataset.id);
 }
 async function onLoginForm(e) {
   try {
