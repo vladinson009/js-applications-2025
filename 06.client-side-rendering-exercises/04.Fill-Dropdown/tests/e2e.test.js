@@ -1,4 +1,4 @@
-const { chromium } = require('playwright-chromium');
+const { chromium } = require('playwright-webkit');
 const { expect } = require('chai');
 
 const host = 'http://localhost:3000'; // Application host (NOT service host - that can be anything)
@@ -67,9 +67,7 @@ describe('E2E tests', function () {
       await page.waitForSelector('#menu');
 
       await page.click('#menu');
-      const city = await page.$$eval(`#menu option`, (t) =>
-        t.map((s) => s.value)
-      );
+      const city = await page.$$eval(`#menu option`, (t) => t.map((s) => s.value));
 
       expect(city[0]).to.equal(data[0]._id);
       expect(city[1]).to.equal(data[1]._id);
