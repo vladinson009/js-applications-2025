@@ -15,8 +15,6 @@ function register(userInput) {
   const email = userInput.get('email').trim();
   const password = userInput.get('password').trim();
   const rePass = userInput.get('re-password').trim();
-  console.log(userInput);
-  console.log(rePass);
 
   if (!email || !password) {
     throw new Error('All fields are required!');
