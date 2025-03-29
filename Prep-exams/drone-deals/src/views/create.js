@@ -1,9 +1,10 @@
+import droneService from '../api/droneService.js';
 import { html, render } from '../utils/lib.js';
 
-const createView = () => html` <section id="create">
+const createView = (onCreate) => html` <section id="create">
   <div class="form form-item">
     <h2>Add Drone Offer</h2>
-    <form class="create-form">
+    <form @submit=${onCreate} class="create-form">
       <input type="text" name="model" id="model" placeholder="Drone Model" />
       <input type="text" name="imageUrl" id="imageUrl" placeholder="Image URL" />
       <input type="number" name="price" id="price" placeholder="Price" />
@@ -25,6 +26,17 @@ const createView = () => html` <section id="create">
   </div>
 </section>`;
 
-export default function createPage() {
-  return render(createView());
+export default function createPage(ctx) {
+  async function onCreate(e) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    try {
+      await droneService.createDrone(formData);
+      ctx.page.redirect('/marketplace');
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+  return render(createView(onCreate));
 }
