@@ -1,4 +1,5 @@
 import userService from '../api/userService.js';
+import errorModal from '../utils/errorModal.js';
 import { html, render } from '../utils/lib.js';
 import { setUserData } from '../utils/userData.js';
 
@@ -35,7 +36,7 @@ export default function registerPage() {
       setUserData(userData);
       ctx.page.redirect('/');
     } catch (error) {
-      alert(error.message);
+      errorModal(error);
     }
   }
 

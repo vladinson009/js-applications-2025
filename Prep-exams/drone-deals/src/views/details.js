@@ -1,7 +1,8 @@
 import droneService from '../api/droneService.js';
+import errorModal from '../utils/errorModal.js';
 import { html, render } from '../utils/lib.js';
 
-const detailsView = (drone, isOwner) => html`<section id="details">
+const detailsView = (drone, isOwner, onDelete) => html`<section id="details">
   <div id="details-wrapper">
     <div>
       <img id="details-img" src=${drone.imageUrl} alt=${drone.model} />
@@ -19,8 +20,8 @@ const detailsView = (drone, isOwner) => html`<section id="details">
       ${isOwner &&
       html`
         <div class="buttons">
-          <a href=${`/marketplace/${drone.id}/edit`} id="edit-btn">Edit</a>
-          <a href="javascript:void(0)" id="delete-btn">Delete</a>
+          <a href=${`/marketplace/${drone._id}/edit`} id="edit-btn">Edit</a>
+          <a @click=${onDelete} href="javascript:void(0)" id="delete-btn">Delete</a>
         </div>
       `}
     </div>
@@ -31,14 +32,19 @@ export default async function detailsPage(ctx) {
   const droneId = ctx.params.droneId;
 
   async function onDelete() {
-    await droneService.deleteDroneById(droneId);
+    const isConfirmed = confirm('Are you sure you want to delete');
+
+    if (isConfirmed) {
+      await droneService.deleteDroneById(droneId);
+      ctx.page.redirect('/marketplace');
+    }
   }
 
   try {
     const drone = await droneService.getDroneById(droneId);
     const isOwner = ctx.userData && ctx.userData._id == drone._ownerId;
-    return render(detailsView(drone, isOwner));
+    return render(detailsView(drone, isOwner, onDelete));
   } catch (error) {
-    alert(error.message);
+    errorModal(error);
   }
 }

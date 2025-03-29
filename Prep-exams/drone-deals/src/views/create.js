@@ -1,4 +1,5 @@
 import droneService from '../api/droneService.js';
+import errorModal from '../utils/errorModal.js';
 import { html, render } from '../utils/lib.js';
 
 const createView = (onCreate) => html` <section id="create">
@@ -34,7 +35,7 @@ export default function createPage(ctx) {
       await droneService.createDrone(formData);
       ctx.page.redirect('/marketplace');
     } catch (error) {
-      alert(error.message);
+      errorModal(error);
     }
   }
 

@@ -1,3 +1,4 @@
+import validateDroneData from '../utils/validateDroneData.js';
 import fetcher from './fetcher.js';
 
 // return an array of drones
@@ -13,16 +14,13 @@ function deleteDroneById(droneId) {
 }
 
 function createDrone(formData) {
-  const objectData = Object.fromEntries(formData);
-  const arrayData = Object.entries(objectData);
-
-  for (const [name, value] of arrayData) {
-    if (value.trim() == '') {
-      throw new Error(`${name} is reqired!`);
-    }
-  }
-
+  const objectData = validateDroneData(formData);
   return fetcher.post('/data/drones', objectData);
+}
+
+function editDrone(droneId, formData) {
+  const objectData = validateDroneData(formData);
+  return fetcher.put(`/data/drones/${droneId}`, objectData);
 }
 
 export default {
@@ -30,4 +28,5 @@ export default {
   getDroneById,
   createDrone,
   deleteDroneById,
+  editDrone,
 };

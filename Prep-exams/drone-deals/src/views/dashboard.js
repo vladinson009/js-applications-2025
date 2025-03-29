@@ -1,4 +1,5 @@
 import droneService from '../api/droneService.js';
+import errorModal from '../utils/errorModal.js';
 import { html, render } from '../utils/lib.js';
 
 const dashboardView = (data) => html`
@@ -31,7 +32,6 @@ export default async function dashboardPage() {
     const data = await droneService.getAllDrones();
     return render(dashboardView(data));
   } catch (error) {
-    //TODO error handling
-    console.log(error.message);
+    errorModal(error);
   }
 }
