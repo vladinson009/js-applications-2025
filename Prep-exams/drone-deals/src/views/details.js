@@ -1,34 +1,44 @@
+import droneService from '../api/droneService.js';
 import { html, render } from '../utils/lib.js';
 
-const detailsView = () => html` <section id="details">
+const detailsView = (drone, isOwner) => html`<section id="details">
   <div id="details-wrapper">
     <div>
-      <img id="details-img" src="./images/avata2.jpg" alt="example1" />
-      <p id="details-model">DJI Avata</p>
+      <img id="details-img" src=${drone.imageUrl} alt=${drone.model} />
+      <p id="details-model">${drone.model}</p>
     </div>
     <div id="info-wrapper">
       <div id="details-description">
-        <p class="details-price">Price: €450</p>
-        <p class="details-condition">Condition: New</p>
-        <p class="details-weight">Weight: 410g</p>
-        <p class="drone-description">
-          The DJI Avata is an innovative FPV (First-Person View) drone designed for
-          immersive flying experiences. With a compact and robust design, it features
-          a 4K camera capable of capturing stunning aerial footage at 60 fps.
-          Equipped with advanced stabilization technology, the Avata ensures smooth
-          video even in dynamic environments.
-        </p>
-        <p class="phone-number">Phone: 0987654321</p>
+        <p class="details-price">Price: €${drone.price}</p>
+        <p class="details-condition">Condition: ${drone.condition}</p>
+        <p class="details-weight">Weight: ${drone.weight}g</p>
+        <p class="drone-description">${drone.description}</p>
+        <p class="phone-number">Phone: ${drone.phone}</p>
       </div>
       <!--Edit and Delete are only for creator-->
-      <div class="buttons">
-        <a href="" id="edit-btn">Edit</a>
-        <a href="" id="delete-btn">Delete</a>
-      </div>
+      ${isOwner &&
+      html`
+        <div class="buttons">
+          <a href=${`/marketplace/${drone.id}/edit`} id="edit-btn">Edit</a>
+          <a href="javascript:void(0)" id="delete-btn">Delete</a>
+        </div>
+      `}
     </div>
   </div>
 </section>`;
 
-export default function detailsPage() {
-  return render(detailsView());
+export default async function detailsPage(ctx) {
+  const droneId = ctx.params.droneId;
+
+  async function onDelete() {
+    await droneService.deleteDroneById(droneId);
+  }
+
+  try {
+    const drone = await droneService.getDroneById(droneId);
+    const isOwner = ctx.userData && ctx.userData._id == drone._ownerId;
+    return render(detailsView(drone, isOwner));
+  } catch (error) {
+    alert(error.message);
+  }
 }
